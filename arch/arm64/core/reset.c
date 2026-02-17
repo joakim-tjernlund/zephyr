@@ -105,7 +105,6 @@ void z_arm64_el3_init(void)
 #endif
 	reg |= (SCR_RES1 |		/* RES1 */
 		SCR_RW_BIT |		/* EL2 execution state is AArch64 */
-		SCR_ST_BIT |		/* Do not trap EL1 accesses to timer */
 		SCR_HCE_BIT |		/* Do not trap HVC */
 		SCR_SMD_BIT);		/* Do not trap SMC */
 #ifdef CONFIG_ARM_PAC
@@ -113,6 +112,8 @@ void z_arm64_el3_init(void)
 		SCR_API_BIT);		/* Do not trap pointer authentication instructions */
 #endif
 	write_scr_el3(reg);
+	/* Can only be accessed if SCR.ST is cleared */
+	write_cntps_cval_el1(~(uint64_t)0); /* Enable cntps */
 
 #if defined(CONFIG_GIC_V3)
 	reg = read_sysreg(ICC_SRE_EL3);
@@ -289,10 +290,6 @@ void z_arm64_el1_init(void)
 
 	write_cntv_cval_el0(~(uint64_t)0);
 	write_cntp_cval_el0(~(uint64_t)0);
-	/*
-	 * Enable secure cntps if/when we use the corresponding timer.
-	 * write_cntps_cval_el1(~(uint64_t)0);
-	 */
 
 	z_arm64_el1_plat_init();
 
